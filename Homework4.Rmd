@@ -1,0 +1,379 @@
+---
+title: "Connor Nguyen"
+output: html_notebook
+---
+# Homework 4
+## conceptual
+### excercise 1
+#### a)
+```{r}
+data("USArrests")
+test=prcomp(USArrests, scale. = T)
+test$sdev
+var=test$sdev^2
+sum(var)
+pve=var/sum(var)
+```
+```{r}
+pve
+```
+
+#### b)
+```{r}
+loadings = test$rotation
+USArrests2 = scale(USArrests)
+sumvar = sum(apply(as.matrix(USArrests2)^2, 2, sum))
+apply((as.matrix(USArrests2) %*% loadings)^2, 2, sum) / sumvar
+```
+## applied
+### excercise 2
+#### a)
+```{r}
+library(MASS)
+data("Boston")
+```
+There is no categorical data in the Boston data hence no removal is needed.
+
+#### b)
+
+```{r}
+p2.data= Boston[,-14]
+```
+medv variable is removed
+
+#### c)
+```{r}
+p2.PCA=prcomp(p2.data, scale= T)
+p2.PCA
+```
+as expected, there are 13 principal component. Standard derivation for each component are
+```{r}
+p2.PCA$sdev
+```
+
+#### d)
+```{r}
+p2.var= (p2.PCA$sdev)^2
+prop=proportions(p2.var)
+sum(prop[1:5])
+```
+
+here we see that there needed to be at least 5 principal component in order for the model to capture 80% of the variation of the data.
+
+### excercise 3
+#### data generation
+```{r}
+set.seed(1)
+   x1 <- rnorm(200)
+   x2 <- 4 * x1^2 + 1 + rnorm(200)
+   y <- as.factor(c(rep(1,100), rep(-1,100)))
+   x2[y==1] <- x2[y==1] + 3
+   x2[y==-1] <- x2[y==-1] - 3
+   plot(x1[y==1], x2[y==1], col = "red", xlab = "X", ylab = "Y", ylim = c(-6, 30))
+   points(x1[y==-1], x2[y==-1], col = "blue")
+   dat <- data.frame(x1,x2,y)
+```
+#### a)
+
+```{r}
+set.seed(1)
+p3.train= sample(1:200, 160)
+p3.x.traindat= dat[p3.train, c(1,2)]
+p3.y.traindat= dat[p3.train, c(3)]
+p3.x.testdat= dat[-p3.train, c(1,2)]
+```
+#### b)
+``` {r}
+set.seed(1)
+library(e1071)
+summary(tune(method= svm,
+     p3.x.traindat,
+     p3.y.traindat,
+     kernel= "linear",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1))))
+p3.svm.linear= svm(p3.x.traindat,
+                   p3.y.traindat,)
+```
+the best performance for the linear hyperplane is when the cost is 1 and the error yeild is 0.18125
+```{r}
+plot(svm(p3.y.traindat~., p3.x.traindat, kernel= "linear", cost=1), dat[p3.train,])
+```
+
+```{r}
+set.seed(1)
+summary(tune(method= svm,
+     p3.x.traindat,
+     p3.y.traindat,
+     kernel= "polynomial",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1), degree= c(1,2,3,4,5))))
+```
+the best result is when the degree is 1 with the cost of 1. Error is 0.175
+```{r}
+plot(svm(p3.y.traindat~., p3.x.traindat, kernel= "polynomial", cost=1, degree=1), dat[p3.train,])
+```
+
+```{r}
+set.seed(1)
+summary(tune(method= svm,
+     p3.x.traindat,
+     p3.y.traindat,
+     kernel= "radial",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1), gamma= c(1,2,3,4,5))))
+```
+
+the best performance for the gamma distribution are when gamma is 2 abd the cost is 1
+```{r}
+plot(svm(p3.y.traindat~., p3.x.traindat, kernel= "radial", cost=1, gamma=2), dat[p3.train,])
+```
+#### c)
+```{r}
+p3.train.linear= predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "linear", cost=1),dat[p3.train, c(1,2)])
+table(true= dat[p3.train,3], predict=  p3.train.linear)
+```
+the training error rate is about 0.15625 for the linear model
+
+```{r}
+p3.train.poly= predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "polynomial", cost=1, degree=1),dat[p3.train, c(1,2)])
+table(true= dat[p3.train,3], predict=  p3.train.poly)
+```
+the training error rate is about 0.15625 for the polynomial model
+
+```{r}
+p3.train.radial= predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "radial", cost=1, gamma=2),dat[p3.train, c(1,2)])
+table(true= dat[p3.train,3], predict=  p3.train.radial)
+```
+the training error rate is about 0.00625 for radial model which is also the best off all
+
+```{r}
+library(stats)
+sum(predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "linear", cost=1), dat[-p3.train, c(1,2)])!= dat[-p3.train,3])/length(dat[-p3.train,3])
+```
+testing error for the linear model is 0.175
+```{r}
+sum(predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "polynomial", cost=1, degree=1), dat[-p3.train, c(1,2)])!= dat[-p3.train,3])/length(dat[-p3.train,3])
+```
+the testing error for the polynomial model is 0.175
+```{r}
+sum(predict(svm(p3.y.traindat~., p3.x.traindat, kernel= "radial", cost=1, gamma=2), dat[-p3.train, c(1,2)])!= dat[-p3.train,3])/length(dat[-p3.train,3])
+```
+the testing error for the radial model is about 0.025 which is the best of all.
+
+### excercise 4
+#### a)
+```{r}
+library(ISLR)
+data('Auto')
+Auto$mpg=ifelse(Auto$mpg>median(Auto$mpg),1,0)
+```
+#### b)
+```{r}
+summary(tune(method= svm,
+     Auto[c(2,3,4,5,6,7,8)],
+     Auto[1],
+     kernel= "linear",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1))))
+```
+the best model is when the cost is about 10^-2 with the cross-validation error of about 0.1045862
+```{r}
+p4.linear.train= predict(svm(Auto[,1]~.,Auto[,c(2,3,4,5,6,7,8)], kernel= "linear","C-classification", cost=0.01),Auto[c(2,3,4,5,6,7,8)])
+
+table(true= Auto[,1], predict=p4.linear.train)
+```
+the traing error is about 0.089 for the linear model
+
+#### c)
+```{r}
+summary(tune(method= svm,
+     Auto[c(2,3,4,5,6,7,8)],
+     Auto[1],
+     kernel= "polynomial",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1), degree= c(2,3,4))))
+p4.poly=tune(method= svm,
+     Auto[c(2,3,4,5,6,7,8)],
+     Auto[1],
+     kernel= "polynomial",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1), degree= c(2,3,4)))
+p4.poly$best.performance
+```
+the cross validation error is 0.1177883, when the cost is 1 and the degree is 3
+
+```{r}
+p4.poly.train= predict(svm(Auto[,1]~.,Auto[,c(2,3,4,5,6,7,8)], kernel= "polynomial","C-classification", cost=1, degree=3),Auto[c(2,3,4,5,6,7,8)])
+
+table(true= Auto[,1], predict=p4.poly.train)
+
+```
+the training error is about 0.084 for the polynomial model with degree=3 and cost=1
+#### d)
+```{r}
+summary(tune(method= svm,
+     Auto[c(2,3,4,5,6,7,8)],
+     Auto[1],
+     kernel= "radial",
+     range= list(cost=c(0.0001,0.001,0.01,0.1,1), gamma= c(0.01,0.1,1,5))))
+```
+the best model yeild the cross-validation error of 0.05816172 when gamma =1 and cost = 1
+
+```{r}
+p4.radial.train= predict(svm(Auto[,1]~.,Auto[,c(2,3,4,5,6,7,8)], kernel= "radial","C-classification", cost=1, gamma=1),Auto[c(2,3,4,5,6,7,8)])
+
+table(true= Auto[,1], predict=p4.radial.train)
+```
+the training error of the radial with gamma=1 and cost=1 is 0.036
+#### e)
+
+the best training model is for the radial model when gamma=1 and cost=1 the the lowest training error and cross validation error.
+
+### excercise 5
+#### a)
+```{r}
+library(ISLR)
+data('OJ')
+set.seed(1)
+p5.train=sample(1:1070, 800)
+```
+#### b)
+```{r}
+set.seed(1)
+OJ$Purchase=unclass(OJ$Purchase)
+summary(tune(method= svm,
+     OJ[c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)],
+     OJ[1],
+     kernel= "linear",
+     range= list(cost=c(0.01, 0.05, 0.1, 0.5, 1, 10))))
+```
+The best crossvalidation error  is when the cost is 0.01 with the error of 0.1325595
+```{r}
+p5.linear.model= svm(OJ[p5.train,1]~., OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)], kernel= "linear", 'C-classification', cost=0.01)
+
+sum(predict(p5.linear.model, OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[p5.train,1])/length(OJ[p5.train,1])
+```
+the training error for the model is 0.175
+```{r}
+sum(predict(p5.linear.model, OJ[-p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[-p5.train,1])/length(OJ[-p5.train,1])
+```
+the testing error for the obove method is about 0.17
+
+#### c)
+```{r}
+set.seed(1)
+summary(tune(method= svm,
+     OJ[c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)],
+     OJ[1],
+     kernel= "polynomial",
+     range= list(cost=c(0.01, 0.05, 0.1, 0.5, 1, 10), degree= 3)))
+```
+the cross-validation error is about 0.1534659 when the cost is 0.5 and the degree is 3
+```{r}
+p5.poly.model= svm(OJ[p5.train,1]~., OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)], kernel= "polynomial", 'C-classification', cost=0.01, degree= 3)
+sum(predict(p5.poly.model, OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[p5.train,1])/length(OJ[p5.train,1])
+```
+the training error for the model is 0.37125
+```{r}
+sum(predict(p5.poly.model, OJ[-p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[-p5.train,1])/length(OJ[-p5.train,1])
+```
+the testing error  of the obove method is about 0.362963
+#### d)
+```{r}
+set.seed(1)
+summary(tune(method= svm,
+     OJ[c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)],
+     OJ[1],
+     kernel= "radial",
+     range= list(cost=c(0.01, 0.05, 0.1, 0.5, 1, 10), gamma= 2)))
+```
+the best cross validation error is 0.1530792 when the cost is 0.5
+```{r}
+p5.radial.model= svm(OJ[p5.train,1]~., OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)], kernel= "radial", 'C-classification', cost=0.5, gamma= 2)
+
+sum(predict(p5.radial.model, OJ[p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[p5.train,1])/length(OJ[p5.train,1])
+```
+the training error is about 0.12375
+```{r}
+sum(predict(p5.radial.model, OJ[-p5.train,c(2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18)])!= OJ[-p5.train,1])/length(OJ[-p5.train,1])
+```
+the testing error for the method above is about 0.2148148
+
+#### e)
+the best training error comes from the radial model when the cost is 0.05 with the error of 0.12375
+
+the best testing error comes from the linear model with the testing error rate of 0.1703704
+
+### excercise 6
+#### a)
+```{r}
+data("iris")
+set.seed(1)
+p6.train= sample(1:150, 120)
+```
+#### b)
+```{r}
+set.seed(1)
+iris$Species=unclass(iris$Species)
+summary(tune(method = svm, iris[1:4], iris[5], kernel='linear', 'C-classification', ranges = list(cost = c(0.1,1,10,100,1000))))
+```
+the best cross validation error for linear model is when the cost is 1 and the error is about 0.05025604	
+
+```{r}
+set.seed(1)
+summary(tune(method = svm, iris[1:4], iris[5], kernel='polynomial', ranges = list(cost = c(0.1,1,10,100,1000), degree= c(1,2,3,4))))
+```
+the best cross validation error is about 0.04979621 when the cost= 10 and the degree is about 1
+
+```{r}
+set.seed(1)
+summary(tune(method = svm, iris[1:4], iris[5], kernel='radial', ranges = list(cost = c(0.1,1,10,100,1000), gamma= c(0.5,1,2,3,4))))
+```
+the best cross validation error is about 0.04491411 when gamma= 0.5 and the cost=1
+
+#### c)
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="linear", 'C-classification',cost=1),iris[p6.train,1:4]) != iris[p6.train,5])/length(iris[p6.train,5])
+```
+traing error of the linear model is about 0.01666667 when the cost is 1
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="linear", 'C-classification',cost=1),iris[-p6.train,1:4]) != iris[-p6.train,5])/length(iris[-p6.train,5])
+```
+the testing error for linear model is about 0
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="polynomial", 'C-classification',cost=10, degree= 1),iris[p6.train,1:4]) != iris[p6.train,5])/length(iris[p6.train,5])
+```
+training error of the polynomial model is about 0.03333333
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="polynomial", 'C-classification',cost=10, degree= 1),iris[-p6.train,1:4]) != iris[-p6.train,5])/length(iris[-p6.train,5])
+```
+the testing error of the polynomial model is about 0.03333333
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="radial", 'C-classification',cost=1, gamma= 0.5),iris[p6.train,1:4]) != iris[p6.train,5])/length(iris[p6.train,5])
+```
+the training error for the radial model is about 0.01666667
+
+```{r}
+sum(predict(svm(iris[p6.train,5]~., iris[p6.train,1:4], kernel="radial", 'C-classification',cost=1, gamma= 0.5),iris[-p6.train,1:4]) != iris[-p6.train,5])/length(iris[-p6.train,5])
+```
+the testing error for the radial model is about 0.03333333
+
+the best testing error come from the linear model with no error
+the best training model come from both the linear and the radial model.
+
+#### d)
+the implimentation of 3 class classifier are as follow
+there are 2 ways
+
+##### one vs one
+Fit all k choose 2 pairwise SVM classifiers. Classify 2
+test observation x∗ to the class to which it was most frequently assigned in these k choose 2 pairwise classifications.
+
+##### one vs all
+
+Fit K different 2-class SVM classifiers to classified each class. Then predict each new observation by passing through all of the model to see what is the most probable class for the new observation.
+
+one vs one is best if there is not a lot of class
+
+svm use the 1 vs all in r
+

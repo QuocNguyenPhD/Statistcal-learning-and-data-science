@@ -1,0 +1,220 @@
+---
+title: "Connor Nguyen"
+output: html_notebook
+---
+# Homework 6
+## conceptual
+### excercise 1
+#### a)
+complete linkage
+
+```{r}
+a <- list()
+a$merge <- matrix(c(-1, -2,
+                    -3, -4,
+                     1,  2), nc=2, byrow=TRUE ) 
+a$height <- c(0.3, 0.5, 0.8)    # define merge heights
+a$order <- 1:4              # order of leaves(trivial if hand-entered)
+a$labels <- c(1,4,2,3)   # labels of leaves
+class(a) <- "hclust"        # make it an hclust object
+plot(a)                  
+```
+#### b)
+single linkage
+```{r}
+a <- list()
+a$merge <- matrix(c(-1, -2,
+                    1, -3,
+                    
+                     2,  -4), nc=2, byrow=TRUE ) 
+a$height <- c(0.3, 0.4, 0.45)    # define merge heights
+a$order <- 1:4              # order of leaves(trivial if hand-entered)
+a$labels <- c(1,4,2,3)   # labels of leaves
+class(a) <- "hclust"        # make it an hclust object
+plot(a)                  
+```
+#### c)
+for complete linkage, the first cluster will include 1 and 4 and the second cluster will include 2,3
+
+#### d)
+for single linkage, the first cluster will include 1,4,2 and the second cluster will include 3
+
+#### e)
+
+```{r}
+a <- list()
+a$merge <- matrix(c(-3, -4,
+                    -1, -2,
+                     1,  2), nc=2, byrow=TRUE ) 
+a$height <- c(0.3, 0.5, 0.8)    # define merge heights
+a$order <- 1:4              # order of leaves(trivial if hand-entered)
+a$labels <- c(2,3,1,4)   # labels of leaves
+class(a) <- "hclust"        # make it an hclust object
+plot(a)                  
+```
+### excercise 2:
+#### a) 
+single linkage
+
+$$
+\begin{matrix} 
+ && 1 & 2 & 3 & 4 & {5,7}&6  &8 \\
+\\
+2&&0.66
+\\
+3&&1.08&1.70
+\\
+4&&0.97 &1.52&1.15
+\\
+5,7&&2.02&1.48&2.80&2.98
+\\
+6&& 0.36&0.96&1.00&0.61 &2.38
+\\
+8&&1.46&1.04&2.16&2.43&0.65&1.82
+\\
+9&&1.96 &2.01&1.91&2.77& 1.75&2.25&1.37
+
+\end{matrix}
+
+$$
+
+#### b) 
+average linkage
+
+$$
+\begin{matrix} 
+ && 1 & 2 & 3 & 4 & {5,7}&6  &8 \\
+\\
+2&&0.66
+\\
+3&&1.08&1.70
+\\
+4&&0.97 &1.52&1.15
+\\
+5,7&& 2.13& 1.61&2.865 &3.09
+\\
+6&& 0.36&0.96&1.00&0.61 &2.485 
+\\
+8&&1.46&1.04&2.16&2.43&0.72&1.82
+\\
+9&&1.96 &2.01&1.91&2.77& 1.795&2.25&1.37
+
+\end{matrix}
+
+$$
+
+### excercise 3
+#### a)
+
+there is not enough information to tell since the distance of 1 to 3 could be short and the distance between 1 to 2 is large.
+compare those distance to the distance from 4 to 5.
+
+#### b)
+
+since there is only 2 data point, no matter what linkage you use, there is going to be the same height.
+
+### excercise 4
+### a)
+
+```{r}
+library('factoextra')
+data(USArrests)
+ex4.data=USArrests
+hclust(dist(ex4.data), method= 'complete')
+plot(hclust(dist(ex4.data), method= 'complete'))
+```
+
+#### b)
+
+```{r}
+cutree(hclust(dist(ex4.data), method= 'complete'), k=3)
+```
+
+#### c)
+
+```{r}
+ex4c.data=scale(USArrests)
+hclust(dist(ex4c.data), method= 'complete')
+plot(hclust(dist(ex4.data), method= 'complete'))
+```
+
+#### d)
+
+```{r}
+fviz_nbclust(ex4c.data, hcut,
+             hc_method = "complete")
+```
+the optimal value of k is 2
+
+#### e)
+
+```{r}
+cutree(hclust(dist(ex4c.data), method= 'complete'), k=2)
+```
+
+```{r}
+ex4c.data[cutree(hclust(dist(ex4c.data), method= 'complete'), k=2)==1, ]
+
+```
+
+```{r}
+ex4c.data[cutree(hclust(dist(ex4c.data), method= 'complete'), k=2)==2, ]
+```
+
+the 2 cluster are relatively far with respect to all variable since in cluster 1 all variable are positive and cluster 2 all variable are negative.
+
+#### f)
+
+there is a good reason to scale the data before hand because the variable could be large and the distance between cluster could change drastically
+
+### Excercise 5
+#### a)
+ 
+ manually import the data
+ 
+#### b)
+
+```{r}
+plot(hclust(dist(Ch10Ex11), method= 'complete'))
+```
+```{r}
+plot(hclust(dist(Ch10Ex11), method= 'single'))
+```
+```{r}
+plot(hclust(dist(Ch10Ex11), method= 'average'))
+```
+
+```{r}
+fviz_nbclust(Ch10Ex11, hcut,
+             hc_method = "complete")
+```
+for the complete linkage, the optimal K is 2
+
+```{r}
+fviz_nbclust(ex4c.data, hcut,
+             hc_method = "single")
+```
+for single linkage, the optimal k is also 2
+
+```{r}
+fviz_nbclust(ex4c.data, hcut,
+             hc_method = "average")
+```
+for average linkage, the optimal k is also 2
+
+the result of optimal K does not depend on which linkage type I used
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

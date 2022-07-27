@@ -1,0 +1,278 @@
+---
+title: "Connor Nguyen(UHid: 1787501)"
+output: html_notebook
+---
+# homework 5
+## Conceptual
+### Excercise 1
+#### a)
+
+```{r}
+x1=c(1,2,3,6,6,7)
+x2=c(4,2,3,2,1,0)
+x=cbind(x1,x2)
+plot(x)
+```
+
+#### b)
+```{r}
+RNGkind(sample.kind = "default")
+           set.seed(2)
+           labels <- sample(2, nrow(x), replace = T)
+```
+the label is given by
+```{r}
+x=cbind(x,labels)
+x
+x=x[,1:2]
+```
+
+#### c)
+here the centroid of cluster 1 is 
+$$
+x_1 = \frac{1+2}{2}=\frac{3}{2} 
+$$
+$$
+x_2=\frac{4+2}{2}=3
+$$
+centroid for cluster 2 is
+$$
+x_1=\frac{3+6+6+7}{4}= \frac{11}{2}
+$$
+$$
+x_2=\frac{3+2+1+0}{4}=\frac{3}{2}
+$$
+```{r}
+
+plot(x)
+points(3/2,3, col= 2)
+points(11/2,3/2, col=3)
+```
+```{r}
+rbind(x, c(3/2,3),c(11/2,3/2))
+dist(rbind(x, c(3/2,3),c(11/2,3/2)))
+```
+
+from the distance matrix above, the centroid 1 is 7 and centroid 2 is 8
+from then we see that 
+data point 1,2 and 3 is closer to 7 where as 4, 5 and 6 are closer to 8
+
+centroid of the sencond itteration
+centroid 1
+$$
+x_1=\frac{1+2+3}{3}=2
+$$
+$$
+x_2=\frac{4+3+2}{3}=3
+$$
+centroid 2
+$$ 
+x_1= \frac{6+6+7}{3}=\frac{19}{3}
+$$
+$$
+x_2=\frac{1+2+0}{3}=1
+$$
+```{r}
+rbind(x, c(2,3),c(19/3,1))
+dist(rbind(x, c(2,3),c(19/3,1)))
+```
+#### d,e,f)
+from the second iteration, 1,2,3 is closer to 7 and 4,5,6 is closer to 8
+```{r}
+plot(x, col= c(3,3,3,2,2,2))
+```
+
+## Applied
+### excercise 2
+
+#### a)
+data set for K=5
+```{r}
+set.seed(1)
+x=matrix(rnorm(200), ncol = 2)
+x[1:20,1]=x[1:20,1]-3
+x[1:20,2]=x[1:20,2]+3
+x[20:40,1]=x[20:40,1]
+x[20:40,2]=x[20:40,2]
+x[40:60,1]=x[40:60,1]-5
+x[40:60,2]=x[40:60,2]-5
+x[60:80,1]=x[60:80,1]-10
+x[60:80,2]=x[60:80,2]+10
+x[80:100,1]=x[80:100,1]+10
+x[80:100,2]=x[80:100,2]-10
+plot(x)
+```
+
+```{r}
+set.seed(1)
+xb=matrix(rnorm(200), ncol = 2)
+xb[1:33,1]=xb[1:33,1]-3
+xb[1:33,2]=xb[1:33,2]+3
+xb[33:66,1]=xb[33:66,1]
+xb[33:66,2]=xb[33:66,2]
+xb[66:100,1]=xb[66:100,1]-5
+xb[66:100,2]=xb[66:100,2]-5
+plot(x)
+```
+
+#### b)
+
+```{r}
+library(factoextra)
+x=data.frame(x)
+p2.cluster.4= eclust(x,
+                 FUNcluster = "kmeans",
+                 k=4,
+                 nstart=50)
+```
+```{r}
+p2.cluster.4$tot.withinss
+```
+```{r}
+p2.cluster.5= eclust(x,
+                 FUNcluster = "kmeans",
+                 k=5,
+                 nstart=50)
+```
+```{r}
+p2.cluster.5$tot.withinss
+
+```
+
+
+```{r}
+p2.cluster.6= eclust(x,
+                 FUNcluster = "kmeans",
+                 k=6,
+                 nstart=50)
+```
+```{r}
+p2.cluster.6$tot.withinss
+```
+
+```{r}
+p2.cluster.4$tot.withinss-p2.cluster.5$tot.withinss
+p2.cluster.5$tot.withinss-p2.cluster.6$tot.withinss
+```
+the biggest drop is when K go from 4 to 5
+
+#### c)
+plot above
+since there are more variations in each cluster when K=4 and there are fewer variation when K=5
+
+K=5 to K=6 the variation decrease is not as much
+
+#### d)
+
+```{r}
+p2.withinss=data.frame(c(1:10))
+for(i in c(1:10)){
+  p2.cluster= eclust(x,
+                 FUNcluster = "kmeans",
+                 k=i,
+                 nstart=50)
+  p2.withinss[i,1]= p2.cluster$tot.withinss
+}
+```
+```{r}
+k=data.frame(c(1:10))
+plot(cbind(k,p2.withinss), xlab='K', ylab= 'withinss')
+```
+according to the elbow logic, k=4 seem to be the most optimal since k=4 will yield the highest distance to the second line at k=1 and k=10
+
+#### e)
+```{r}
+fviz_nbclust(x, kmeans, nstart=50, method = "gap_stat", nboot=50)
+```
+the most optimal value of k is when k=5
+
+### excercise 3)
+#### a)
+```{r}
+data("iris")
+p3.data=(iris[-5])
+p3.wss=data.frame(c(1:10))
+for(i in c(1:10)){
+p3.cluster=eclust(p3.data,'kmeans', k=i, nstart=50)
+p3.wss[i,1]= p3.cluster$tot.withinss
+}
+```
+```{r}
+plot(cbind(c(1:10),p3.wss), xlab= 'k', ylab='wss')
+```
+#### b)
+```{r}
+fviz_nbclust(p3.data, kmeans, nstart=50, method = "gap_stat", nboot=50)
+```
+the most obtimal value of k is when k=6 
+
+#### c)
+```{r}
+p3c.cluster= eclust(p3.data,'kmeans', k=6, nstart=50)
+sum(p3c.cluster$cluster !=unclass(iris$Species))/length(iris$Species)
+```
+from the clustering model, we see that the clustering label error is about 75% of the true value
+
+#### d)
+```{r}
+p3d.data=scale((iris[-5]))
+fviz_nbclust(p3d.data, kmeans, nstart=50, method = "gap_stat", nboot=50)
+```
+from the scale data, the optimal value of k is when k=3 which is the same as the number of class in the accual data
+
+#### e)
+```{r}
+p3d.cluster= eclust(p3d.data,'kmeans', k=3, nstart=50)
+sum(p3d.cluster$cluster !=unclass(iris$Species))/length(iris$Species)
+```
+the error rate when scaling the data then do the clustering is about 16%.
+
+#### f)
+```{r}
+p3d.cluster$cluster
+unclass(iris$Species)
+```
+for 2 and 3 there are some overlaping where as 1 is completely separate
+
+### excercise 4)
+#### a)
+```{r}
+p4.data= data.frame(t(Ch10Ex11))
+```
+
+#### b)
+```{r}
+p4.wss=data.frame(c(1:10))
+for(i in c(1:10)){
+p4.cluster=eclust(p4.data,'kmeans', k=i, nstart=50)
+p4.wss[i,1]= p4.cluster$tot.withinss
+}
+```
+```{r}
+plot(cbind(c(1:10),p4.wss), xlab= 'k', ylab='wss')
+```
+it does appear to have an elbow the optimal k seem to be k=2
+
+#### c)
+```{r}
+
+fviz_nbclust(p4.data, kmeans, nstart=50, method = "gap_stat", nboot=50)
+```
+from the plot, we can see that k=2 will yield the most optimal result of clustering.
+
+#### d)
+the amount of accual result of 2 classes. The result from part c is very close.
+
+#### e)
+```{r}
+p4.accual.dat=data.frame(rep(c(2,1), each=20))
+p4.cluster=eclust(p4.data,'kmeans', k=2, nstart=50)
+sum(data.frame(p4.cluster$cluster)!=p4.accual.dat)/length(p4.cluster$cluster)
+```
+as we can see, the error rate is 0 which mean the clustering result match exactly with the true label.
+
+
+
+
+
+
